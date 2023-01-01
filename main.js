@@ -13,6 +13,10 @@ const app = express()
 
 app.use(express.json());
 
+const checkPassword = (pw) => {
+    return (pw.length >= 8)
+}
+
 // get wallet info for uuid
 app.get('/wallets/:wId', (req, res) => {
     userStore.get(req.params.wId).then(async (walletInfo) => {
@@ -57,6 +61,11 @@ app.get('/wallets/:wId', (req, res) => {
 app.post('/wallets', (req, res) => {
     if (!req.body.password) {
         res.status(400).send('Password needed')
+        return
+    }
+
+    if (checkPassword(req.body.password) === false) {
+        res.status(400).send('Password needs to have at least 8 chars.')
         return
     }
 
@@ -108,6 +117,12 @@ app.put('/wallets/:wId', (req, res) => {
 
             if (crypto.createHash('sha256').update(basicPassword).digest('hex') == data.hashPassword) {
                 if (!!req.body.password) {
+
+                    if (checkPassword(req.body.password) === false) {
+                        res.status(400).send('Password needs to have at least 8 chars.')
+                        return
+                    }
+                    
                     const wallet = await Wallet.import(basicPassword, data.encryptedMnemonic, { network, rpc }, { disableAddressDerivation: true })
                     const encryptedMnemonic = await wallet.export(req.body.password)
 
@@ -164,7 +179,8 @@ app.post('/wallets/:wId/transactions', (req, res) => {
                     toAddr: req.body.toAddr,
                     amount: req.body.amount,
                     changeAddrOverride: wallet.receiveAddress,
-                    calculateNetworkFee: true
+                    calculateNetworkFee: true,
+                    inclusiveFee: req.body.inclusiveFee ? true : false
                 })
                     .then((e) => {
                         res.send(`${e.txid}`)
