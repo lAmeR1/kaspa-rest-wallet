@@ -35,7 +35,7 @@ app.get('/wallets/:wId', (req, res) => {
                 // password given - decrypt wallet
                 if (crypto.createHash('sha256').update(basicPassword).digest('hex') == walletInfo.hashPassword) {
                     // pw is fine. Decode wallet
-                    const wallet = await Wallet.import(basicPassword, walletInfo.encryptedMnemonic, { network, rpc }, { disableAddressDerivation: true })
+                    const wallet = await Wallet.import(basicPassword, walletInfo.encryptedMnemonic, { network, rpc }, { disableAddressDerivation: true, syncOnce: true })
                     // return extended information
                     res.json({
                         "publicAddress": publicAddress,
@@ -85,7 +85,7 @@ app.post('/wallets', (req, res) => {
         } else {
             // create a new wallet
             const hashPassword = crypto.createHash('sha256').update(req.body.password).digest('hex')
-            const wallet = new Wallet(null, null, { network, rpc }, { disableAddressDerivation: true })
+            const wallet = new Wallet(null, null, { network, rpc }, { disableAddressDerivation: true, syncOnce: true })
 
             const publicAddress = wallet.receiveAddress
             const encryptedMnemonic = await wallet.export(req.body.password)
@@ -123,7 +123,7 @@ app.put('/wallets/:wId', (req, res) => {
                         return
                     }
                     
-                    const wallet = await Wallet.import(basicPassword, data.encryptedMnemonic, { network, rpc }, { disableAddressDerivation: true })
+                    const wallet = await Wallet.import(basicPassword, data.encryptedMnemonic, { network, rpc }, { disableAddressDerivation: true, syncOnce: true })
                     const encryptedMnemonic = await wallet.export(req.body.password)
 
                     // update data object
@@ -173,7 +173,7 @@ app.post('/wallets/:wId/transactions', (req, res) => {
                     res.status(400).send("amount parameter needed"); return
                 }
 
-                const wallet = await Wallet.import(basicPassword, data.encryptedMnemonic, { network, rpc }, { disableAddressDerivation: true })
+                const wallet = await Wallet.import(basicPassword, data.encryptedMnemonic, { network, rpc }, { disableAddressDerivation: true, syncOnce: true })
 
                 await wallet.submitTransaction({
                     toAddr: req.body.toAddr,
