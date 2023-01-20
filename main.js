@@ -18,6 +18,14 @@ const checkPassword = (pw) => {
     return (pw.length >= 8)
 }
 
+// api-docs route for some testing and documentation
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./swagger.json');
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use(/^\/$/i, (req, res) => {
+    res.redirect(301, '/api-docs');
+});
+
 // get wallet info for uuid
 app.get('/wallets/:wId', (req, res) => {
     userStore.get(req.params.wId).then(async (walletInfo) => {
@@ -166,6 +174,10 @@ app.post('/wallets/:wId/transactions', (req, res) => {
             res.status(404).send('Wallet not found.')
             return
         } else {
+            if (!req.header.authorization) {
+                res.status(400).send("Auth Basic password needed.")
+                return
+            }
             // parse login and password from headers
             const b64auth = (req.headers.authorization || '').split(' ')[1] || ''
             const [basicUser, basicPassword] = Buffer.from(b64auth, 'base64').toString().split(':')

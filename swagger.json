@@ -1,0 +1,162 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "version": "0.0.1",
+    "description": "This is a REST-API wallet for Kaspa network. You can create wallets, update their password and create transactions.",
+    "title": "Kaspa REST Wallet"
+  },
+  "paths": {
+    "/wallets/{wId}": {
+      "get": {
+        "summary": "Get a specific wallet by UUID",
+        "parameters": [
+          {
+            "name": "wId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the wallet to retrieve"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved wallet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "walletId": {
+                      "type": "string"
+                    },
+                    "balance": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Wallet not found"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a specific wallet",
+        "parameters": [
+          {
+            "name": "wId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the wallet to update"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully updated wallet"
+          }
+        }
+      }
+    },
+    "/wallets": {
+      "post": {
+        "summary": "Create a new wallet",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "uuid": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully created wallet. Returns uuid, encryptedMnemonic and the raw mnemonic",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "walletId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/wallets/{wId}/transactions": {
+      "post": {
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Initiate a transaction",
+        "parameters": [
+          {
+            "name": "wId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the wallet to initiate the transaction from"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": {
+                    "type": "string"
+                  },
+                  "toAddr": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "number"
+                  },
+                  "inclusiveFee": {
+                    "type": "boolean",
+                    "default": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully initiated transaction. Return value is the TX-ID"
+          },
+          "400": {
+            "description": "Any problems while creating the transaction."
+          }
+        }
+      }
+    }
+  }
+}
