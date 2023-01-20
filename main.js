@@ -13,6 +13,7 @@ const app = express()
 
 app.use(express.json());
 
+// minimum required password
 const checkPassword = (pw) => {
     return (pw.length >= 8)
 }
@@ -59,11 +60,13 @@ app.get('/wallets/:wId', (req, res) => {
 
 // endpoint: create a new wallet
 app.post('/wallets', (req, res) => {
+    // password needed for wallet creation
     if (!req.body.password) {
-        res.status(400).send('Password needed')
+        res.status(400).send('Password needed.')
         return
     }
 
+    // check if password matches rules
     if (checkPassword(req.body.password) === false) {
         res.status(400).send('Password needs to have at least 8 chars.')
         return
@@ -78,30 +81,36 @@ app.post('/wallets', (req, res) => {
         return
     }
 
+    // check if uuid is free -> create wallet
     userStore.get(uuid).then(async (data) => {
+        // uuid already set? return 400
         if (data !== undefined) {
-            res.status(400).send('uuid already set.')
+            res.status(400).send('Uuid already set.')
             return
         } else {
             // create a new wallet
+
+            // save hash of password for future verification
             const hashPassword = crypto.createHash('sha256').update(req.body.password).digest('hex')
+
+            // create a wallet, disable address derivation => one static kaspa address
             const wallet = new Wallet(null, null, { network, rpc }, { disableAddressDerivation: true })
 
             const publicAddress = wallet.receiveAddress
             const encryptedMnemonic = await wallet.export(req.body.password)
 
+            // first set password to userStore and then return the data
             userStore.set(uuid, {
                 publicAddress,
                 encryptedMnemonic,
                 hashPassword
-            })
-
-            res.json({
+            }).then(() => res.json({
                 "publicAddress": publicAddress,
                 "uuid": uuid,
                 encryptedMnemonic,
                 "mnemonic": wallet.mnemonic
-            })
+            }))
+                .catch(() => res.status(400).send('Error saving wallet.'))
         }
     })
 })
@@ -109,7 +118,7 @@ app.post('/wallets', (req, res) => {
 app.put('/wallets/:wId', (req, res) => {
     userStore.get(req.params.wId).then(async (data) => {
         if (data === undefined) {
-            res.status(404).send('wallet not found')
+            res.status(404).send('Wallet not found.')
             return
         } else {
             const b64auth = (req.headers.authorization || '').split(' ')[1] || ''
@@ -122,7 +131,7 @@ app.put('/wallets/:wId', (req, res) => {
                         res.status(400).send('Password needs to have at least 8 chars.')
                         return
                     }
-                    
+
                     const wallet = await Wallet.import(basicPassword, data.encryptedMnemonic, { network, rpc }, { disableAddressDerivation: true })
                     const encryptedMnemonic = await wallet.export(req.body.password)
 
@@ -131,14 +140,14 @@ app.put('/wallets/:wId', (req, res) => {
                     data.hashPassword = crypto.createHash('sha256').update(req.body.password).digest('hex')
 
                     // update database
-                    userStore.set(req.params.wId, data)
-
-                    // return new object
-                    res.json({
-                        publicAddress: data.publicAddress,
-                        encryptedMnemonic: data.encryptedMnemonic,
-                        mnemonic: wallet.mnemonic
-                    })
+                    userStore.set(req.params.wId, data).then(() =>
+                        // return new object
+                        res.json({
+                            publicAddress: data.publicAddress,
+                            encryptedMnemonic: data.encryptedMnemonic,
+                            mnemonic: wallet.mnemonic
+                        }))
+                        .catch(() => res.status(400).send('Error saving wallet.'))
 
                     return
                 }
@@ -148,17 +157,16 @@ app.put('/wallets/:wId', (req, res) => {
                 return
             }
         }
-    })
+    }).catch(() => res.status(400).send('Error reading wallet.'))
 })
 
 app.post('/wallets/:wId/transactions', (req, res) => {
     userStore.get(req.params.wId).then(async (data) => {
         if (data === undefined) {
-            res.status(404).send('wallet not found')
+            res.status(404).send('Wallet not found.')
             return
         } else {
-            // parse login and password from heade rs
-
+            // parse login and password from headers
             const b64auth = (req.headers.authorization || '').split(' ')[1] || ''
             const [basicUser, basicPassword] = Buffer.from(b64auth, 'base64').toString().split(':')
 
@@ -174,18 +182,14 @@ app.post('/wallets/:wId/transactions', (req, res) => {
                 }
 
                 const wallet = await Wallet.import(basicPassword, data.encryptedMnemonic, { network, rpc }, { disableAddressDerivation: true })
-
                 await wallet.submitTransaction({
                     toAddr: req.body.toAddr,
                     amount: req.body.amount,
                     changeAddrOverride: wallet.receiveAddress,
                     calculateNetworkFee: true,
                     inclusiveFee: req.body.inclusiveFee ? true : false
-                })
-                    .then((e) => {
-                        res.send(`${e.txid}`)
-
-                    })
+                }, true)
+                    .then((e) => res.send(`${e.txid}`))
                     .catch((e) => {
                         if (JSON.stringify(e) !== "{}") {
                             res.status(400).send(`${JSON.stringify(e)}`)
@@ -195,13 +199,12 @@ app.post('/wallets/:wId/transactions', (req, res) => {
                             return
                         }
                     })
-
             } else {
                 res.status(403).send('Password incorrect.')
                 return
             }
         }
-    })
+    }).catch(() => res.status(400).send('Error reading wallet.'))
 })
 
 // init wallet
