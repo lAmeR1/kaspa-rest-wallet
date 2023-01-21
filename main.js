@@ -174,7 +174,7 @@ app.post('/wallets/:wId/transactions', (req, res) => {
             res.status(404).send('Wallet not found.')
             return
         } else {
-            if (!req.header.authorization) {
+            if (!req.headers.authorization) {
                 res.status(400).send("Auth Basic password needed.")
                 return
             }
