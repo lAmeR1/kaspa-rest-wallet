@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "@kaspa/grpc-node": "^1.0.8",
+    "@kaspa/wallet": "^1.4.23",
+    "@keyv/sqlite": "^3.6.4",
+    "express": "^4.18.2",
+    "keyv": "^4.5.2",
+    "swagger-ui-express": "^4.6.0",
+    "uuid4": "^2.0.3",
+    "validator": "^13.7.0"
+  }
+}
