@@ -1,14 +1,27 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "version": "0.0.1",
-    "description": "This is a REST-API wallet for Kaspa network. You can create wallets, update their password and create transactions.",
-    "title": "Kaspa REST Wallet"
+    "version": "1.0.0",
+    "title": "Wallet API",
+    "description": "This is a REST-API wallet for Kaspa network. You can create wallets, update their password and create transactions."
+  },
+  "servers": [
+    {
+      "url": "https://kaspagames.org/api"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BasicAuth": {
+        "type": "http",
+        "scheme": "basic"
+      }
+    }
   },
   "paths": {
     "/wallets/{wId}": {
       "get": {
-        "summary": "Get a specific wallet by UUID",
+        "summary": "Get a specific wallet by ID",
         "parameters": [
           {
             "name": "wId",
@@ -108,7 +121,7 @@
       "post": {
         "security": [
           {
-            "basicAuth": []
+            "BasicAuth": []
           }
         ],
         "summary": "Initiate a transaction",
