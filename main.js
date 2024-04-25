@@ -3,12 +3,13 @@ const { RPC } = require('@kaspa/grpc-node');
 const express = require('express')
 const Keyv = require("keyv")
 const crypto = require('crypto')
+var cors = require('cors')
 const validator = require('validator')
 const uuid4 = require('uuid4')
 
 const network = "kaspa";
-const rpc = new RPC({ clientConfig: { host: process.env.KASPAD_ADDR } });
-const userStore = new Keyv(process.env.DB_ADDR, { serialize: JSON.stringify, deserialize: JSON.parse });
+const rpc = new RPC({ clientConfig: { host: (process.env.KASPAD_ADDR || "de4.kaspa.org") } });
+const userStore = new Keyv(process.env.DB_ADDR || "sqlite://test.db", { serialize: JSON.stringify, deserialize: JSON.parse });
 const app = express()
 
 app.use(cors())
@@ -226,5 +227,5 @@ const init = async () => {
     await initKaspaFramework()
 };
 
-app.listen(process.env.PORT || 3000)
+app.listen(process.env.PORT || 3001)
 init();
