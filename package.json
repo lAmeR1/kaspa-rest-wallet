@@ -3,6 +3,7 @@
     "@kaspa/grpc-node": "^1.0.8",
     "@kaspa/wallet": "^1.4.21",
     "@keyv/sqlite": "^3.6.4",
+    "cors": "^2.8.5",
     "express": "^4.18.2",
     "keyv": "^4.5.2",
     "swagger-ui-express": "^4.6.0",

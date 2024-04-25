@@ -11,6 +11,7 @@ const rpc = new RPC({ clientConfig: { host: process.env.KASPAD_ADDR } });
 const userStore = new Keyv(process.env.DB_ADDR, { serialize: JSON.stringify, deserialize: JSON.parse });
 const app = express()
 
+app.use(cors())
 app.use(express.json());
 
 // minimum required password
